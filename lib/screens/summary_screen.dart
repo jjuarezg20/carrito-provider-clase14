@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
+import '../shared/app_frame.dart';
 import '../shared/theme.dart';
 
 class SummaryScreen extends StatelessWidget {
@@ -12,123 +13,125 @@ class SummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final products = cart.selectedProducts;
-    final wide = MediaQuery.sizeOf(context).width >= 760;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Resumen de compra',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
+    return AppFrame(
+      toolbar: ShopToolbar(
+        title: 'Resumen de compra',
+        itemCount: cart.selectedCount,
+        showBack: true,
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  wide ? 28 : 20,
-                  24,
-                  wide ? 28 : 20,
-                  30,
-                ),
-                sliver: SliverList.list(
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _StepBanner(itemCount: products.length),
+                const SizedBox(height: 15),
+                const Row(
                   children: [
-                    const _SummaryHero(),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Tus productos',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        'Productos seleccionados',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
                         ),
-                        Text(
-                          '${products.length} artículos',
-                          style: const TextStyle(color: kMuted, fontSize: 13),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    for (final product in products) ...[
-                      _SummaryProductRow(product: product),
-                      const SizedBox(height: 10),
-                    ],
-                    const SizedBox(height: 10),
-                    _TotalCard(total: cart.total, itemCount: products.length),
-                    const SizedBox(height: 18),
-                    const _SecureNote(),
+                    Text(
+                      'Revisar detalles',
+                      style: TextStyle(fontSize: 9, color: kMuted),
+                    ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                for (final product in products) ...[
+                  _SummaryProductRow(product: product),
+                  const SizedBox(height: 7),
+                ],
+                const SizedBox(height: 4),
+                _PaymentBreakdown(total: cart.total),
+                const SizedBox(height: 10),
+                const _SecureNote(),
+              ]),
+            ),
           ),
-        ),
+        ],
       ),
-      bottomNavigationBar: _CheckoutBottomBar(enabled: cart.canContinue),
+      footer: _CheckoutFooter(
+        total: cart.total,
+        itemCount: cart.selectedCount,
+      ),
     );
   }
 }
 
-class _SummaryHero extends StatelessWidget {
-  const _SummaryHero();
+class _StepBanner extends StatelessWidget {
+  final int itemCount;
+
+  const _StepBanner({required this.itemCount});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: kNavy,
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1F3864), Color(0xFF345583)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: kLine),
       ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(15),
+            width: 23,
+            height: 23,
+            alignment: Alignment.center,
+            decoration:
+                const BoxDecoration(color: kNavy, shape: BoxShape.circle),
+            child: const Text(
+              '2',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-            child: const Icon(Icons.shopping_bag_rounded, color: Colors.white),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 8),
           const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Buena elección!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Revisa tu selección antes de pagar.',
-                  style: TextStyle(color: Color(0xFFDCE6F6), fontSize: 13),
-                ),
-              ],
+            child: Text(
+              'Paso final: Verificación',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
             ),
           ),
-          const Icon(
-            Icons.check_circle_rounded,
-            color: Color(0xFFB7E5D0),
-            size: 25,
-          ),
+          _CountPill(label: '$itemCount artículos'),
         ],
+      ),
+    );
+  }
+}
+
+class _CountPill extends StatelessWidget {
+  final String label;
+
+  const _CountPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5E9E7),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: kAccent,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -136,57 +139,58 @@ class _SummaryHero extends StatelessWidget {
 
 class _SummaryProductRow extends StatelessWidget {
   final Product product;
+
   const _SummaryProductRow({required this.product});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: kLine),
       ),
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: product.color,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(product.icon, color: kNavy, size: 25),
+            child: Icon(product.icon, color: kNavy, size: 24),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 9),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+                      fontSize: 10, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'Cantidad: 1x',
+                  style: TextStyle(fontSize: 9, color: kMuted),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  product.description,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: kMuted),
+                  formatMoney(product.price),
+                  style: const TextStyle(
+                    color: kAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            formatUsd(product.price),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: kNavy,
             ),
           ),
         ],
@@ -195,40 +199,55 @@ class _SummaryProductRow extends StatelessWidget {
   }
 }
 
-class _TotalCard extends StatelessWidget {
-  final double total;
-  final int itemCount;
-  const _TotalCard({required this.total, required this.itemCount});
+class _PaymentBreakdown extends StatelessWidget {
+  final int total;
+
+  const _PaymentBreakdown({required this.total});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(19),
+      padding: const EdgeInsets.fromLTRB(11, 10, 11, 9),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(19),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: kLine),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AmountLine(label: 'Productos ($itemCount)', amount: total),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1),
+          const Text(
+            'Desglose de pago',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
           ),
+          const Divider(height: 13),
+          _AmountLine(label: 'Subtotal', amount: total),
+          const SizedBox(height: 6),
+          const _LabelValueLine(
+              label: 'Envío estándar', value: 'Gratis', positive: true),
+          const SizedBox(height: 6),
+          const _LabelValueLine(label: 'Impuestos incluidos', value: '\$0'),
+          const Divider(height: 16),
           Row(
             children: [
               const Expanded(
-                child: Text(
-                  'Total a pagar',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total',
+                        style: TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text('IVA incluido',
+                        style: TextStyle(fontSize: 8, color: kMuted)),
+                  ],
                 ),
               ),
               Text(
-                formatUsd(total),
+                formatMoney(total),
                 style: const TextStyle(
-                  fontSize: 23,
+                  color: kAccent,
+                  fontSize: 17,
                   fontWeight: FontWeight.w900,
-                  color: kNavy,
                 ),
               ),
             ],
@@ -241,22 +260,42 @@ class _TotalCard extends StatelessWidget {
 
 class _AmountLine extends StatelessWidget {
   final String label;
-  final double amount;
+  final int amount;
+
   const _AmountLine({required this.label, required this.amount});
+
+  @override
+  Widget build(BuildContext context) {
+    return _LabelValueLine(label: label, value: formatMoney(amount));
+  }
+}
+
+class _LabelValueLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool positive;
+
+  const _LabelValueLine({
+    required this.label,
+    required this.value,
+    this.positive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(color: kMuted, fontSize: 13),
-          ),
+          child:
+              Text(label, style: const TextStyle(fontSize: 9, color: kMuted)),
         ),
         Text(
-          formatUsd(amount),
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          value,
+          style: TextStyle(
+            fontSize: 9,
+            color: positive ? kGreen : kInk,
+            fontWeight: positive ? FontWeight.w700 : FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -271,72 +310,183 @@ class _SecureNote extends StatelessWidget {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.lock_outline_rounded, size: 15, color: kMuted),
-        SizedBox(width: 7),
-        Text(
-          'Tu compra de demostración es segura',
-          style: TextStyle(color: kMuted, fontSize: 12),
+        Icon(Icons.shield_outlined, size: 12, color: kMuted),
+        SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            'Transacción protegida con cifrado bancario de 256 bits',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 8, color: kMuted),
+          ),
         ),
       ],
     );
   }
 }
 
-class _CheckoutBottomBar extends StatelessWidget {
-  final bool enabled;
-  const _CheckoutBottomBar({required this.enabled});
+class _CheckoutFooter extends StatelessWidget {
+  final int total;
+  final int itemCount;
+
+  const _CheckoutFooter({required this.total, required this.itemCount});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE7EAF0))),
+        border: Border(top: BorderSide(color: kLine)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 860),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: enabled
-                      ? () {
-                          final paidTotal = context.read<CartProvider>().total;
-                          showDialog<void>(
-                            context: context,
-                            builder: (dialogContext) => AlertDialog(
-                              icon: const Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF18845A),
-                                size: 42,
-                              ),
-                              title: const Text('¡Compra confirmada!'),
-                              content: Text(
-                                'Tu pago por ${formatUsd(paidTotal)} se realizó correctamente.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(dialogContext).pop(),
-                                  child: const Text('Listo'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      : null,
-                  icon: const Icon(Icons.lock_rounded, size: 18),
-                  label: const Text('Proceder a pagar'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total final',
+                      style: TextStyle(fontSize: 9, color: kMuted),
+                    ),
+                    Text(
+                      formatMoney(total),
+                      style: const TextStyle(
+                        color: kAccent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF2E9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Envío bonificado',
+                  style: TextStyle(
+                      color: kGreen, fontSize: 8, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final cart = context.read<CartProvider>();
+                final paidTotal = cart.total;
+                final paidCount = cart.selectedCount;
+                showDialog<void>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (dialogContext) => _PurchaseSuccessDialog(
+                    total: paidTotal,
+                    itemCount: paidCount,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: const Text('Proceder a pagar'),
             ),
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class _PurchaseSuccessDialog extends StatelessWidget {
+  final int total;
+  final int itemCount;
+
+  const _PurchaseSuccessDialog({required this.total, required this.itemCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      icon: Container(
+        width: 42,
+        height: 42,
+        decoration: const BoxDecoration(
+          color: Color(0xFFEAF4EA),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.check_circle_rounded, color: kGreen, size: 25),
+      ),
+      title: const Text(
+        '¡Compra exitosa!',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Tu pedido ha sido confirmado correctamente.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11, color: kMuted),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F6F9),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: kLine),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'MONTO TOTAL PAGADO',
+                  style:
+                      TextStyle(fontSize: 8, color: kMuted, letterSpacing: 0.5),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  formatMoney(total),
+                  style: const TextStyle(
+                    color: kAccent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '$itemCount productos comprados',
+                  style: const TextStyle(fontSize: 9, color: kMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 11),
+          const Text(
+            'Te enviaremos la factura electrónica y el código de seguimiento a tu correo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 9, color: kMuted, height: 1.4),
+          ),
+        ],
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+      actions: [
+        SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Aceptar'),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-const Color kNavy = Color(0xFF1F3864);
-const Color kAccent = Color(0xFFB03A2E);
-const Color kNavySoft = Color(0xFFE7ECF5);
-const Color kInk = Color(0xFF202B3C);
-const Color kMuted = Color(0xFF68758A);
+const Color kNavy = Color(0xFF243D75);
+const Color kAccent = Color(0xFFA74335);
+const Color kCanvas = Color(0xFFF7F8FC);
+const Color kBackdrop = Color(0xFFE7EAF0);
+const Color kLine = Color(0xFFE2E5EB);
+const Color kInk = Color(0xFF252A33);
+const Color kMuted = Color(0xFF69717F);
+const Color kGreen = Color(0xFF3E7D45);
 
 ThemeData buildAppTheme() {
   final base = ThemeData(
@@ -16,36 +19,20 @@ ThemeData buildAppTheme() {
       surface: Colors.white,
     ),
   );
+
   return base.copyWith(
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFF7F8FA),
-      foregroundColor: kInk,
-      centerTitle: false,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-    ),
-    scaffoldBackgroundColor: const Color(0xFFF7F8FA),
-    dividerColor: const Color(0xFFE7EAF0),
+    scaffoldBackgroundColor: kCanvas,
     textTheme: base.textTheme.apply(bodyColor: kInk, displayColor: kInk),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: kNavy,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFDDE2EA),
-        disabledForegroundColor: const Color(0xFF7B8492),
-        minimumSize: const Size(48, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-      ),
-    ),
-    cardTheme: CardThemeData(
-      color: Colors.white,
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFE7EAF0)),
+        disabledBackgroundColor: const Color(0xFFE1E3E8),
+        disabledForegroundColor: const Color(0xFF7E8490),
+        minimumSize: const Size(48, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
     ),
   );

@@ -20,7 +20,7 @@ class CarritoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mercado 14',
+      title: 'Demo Clase 14 · Carrito Provider',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: const CatalogScreen(),

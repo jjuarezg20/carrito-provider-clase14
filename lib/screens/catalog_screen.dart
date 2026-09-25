@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
+import '../shared/app_frame.dart';
 import '../shared/theme.dart';
 import 'summary_screen.dart';
 
@@ -12,105 +13,58 @@ class CatalogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final wide = MediaQuery.sizeOf(context).width >= 760;
 
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 20,
-        title: const _Brand(),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: _SelectionBadge(count: cart.selectedCount),
-          ),
-        ],
+    return AppFrame(
+      toolbar: ShopToolbar(
+        title: 'Catálogo',
+        itemCount: cart.selectedCount,
+        onCartPressed: cart.canContinue
+            ? () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const SummaryScreen(),
+                  ),
+                )
+            : null,
       ),
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    wide ? 28 : 20,
-                    22,
-                    wide ? 28 : 20,
-                    8,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _Eyebrow(label: 'CATÁLOGO · 6 PRODUCTOS'),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Elige tus tres favoritos',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.7,
-                            ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        'Selecciona exactamente 3 productos para preparar tu compra.',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.copyWith(color: kMuted),
-                      ),
-                      const SizedBox(height: 22),
-                      _SelectionProgress(count: cart.selectedCount),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              wide ? 28 : 20,
-              12,
-              wide ? 28 : 20,
-              28,
-            ),
-            sliver: SliverGrid.builder(
-              itemCount: Product.catalog.length,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 390,
-                mainAxisExtent: 226,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemBuilder: (context, index) {
-                final product = Product.catalog[index];
-                return _ProductCard(
-                  product: product,
-                  selected: cart.isSelected(product.id),
-                  onTap: () {
-                    final updated =
-                        context.read<CartProvider>().toggleProduct(product.id);
-                    if (!updated) {
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Ya elegiste 3 productos. Quita uno para hacer un cambio.',
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _SelectionProgress(count: cart.selectedCount),
+                const SizedBox(height: 10),
+                for (final product in Product.catalog) ...[
+                  _ProductTile(
+                    product: product,
+                    selected: cart.isSelected(product.id),
+                    onTap: () {
+                      final updated = context
+                          .read<CartProvider>()
+                          .toggleProduct(product.id);
+                      if (!updated) {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Ya elegiste 3 productos. Quita uno para cambiar tu selección.',
+                              ),
+                              behavior: SnackBarBehavior.floating,
                             ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                    }
-                  },
-                );
-              },
+                          );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 7),
+                ],
+                const _BundleNote(),
+              ]),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _CatalogBottomBar(
+      footer: _CatalogFooter(
         count: cart.selectedCount,
         canContinue: cart.canContinue,
       ),
@@ -118,132 +72,76 @@ class CatalogScreen extends StatelessWidget {
   }
 }
 
-class _Brand extends StatelessWidget {
-  const _Brand();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: kNavy,
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: const Icon(
-            Icons.storefront_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Text(
-          'Mercado 14',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-        ),
-      ],
-    );
-  }
-}
-
-class _SelectionBadge extends StatelessWidget {
-  final int count;
-  const _SelectionBadge({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.shopping_bag_outlined, size: 17, color: kNavy),
-          const SizedBox(width: 7),
-          Text(
-            '$count / 3',
-            style: const TextStyle(fontWeight: FontWeight.w700, color: kNavy),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Eyebrow extends StatelessWidget {
-  final String label;
-  const _Eyebrow({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: kNavySoft,
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: kNavy,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.7,
-        ),
-      ),
-    );
-  }
-}
-
 class _SelectionProgress extends StatelessWidget {
   final int count;
+
   const _SelectionProgress({required this.count});
 
   @override
   Widget build(BuildContext context) {
+    final remaining = CartProvider.selectionLimit - count;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7EAF0)),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: kLine),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$count de 3 seleccionados',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEAF0FA),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    value: count / CartProvider.selectionLimit,
-                    minHeight: 7,
-                    backgroundColor: const Color(0xFFE9EDF3),
-                    color: kAccent,
+                child:
+                    const Icon(Icons.checklist_rounded, size: 15, color: kNavy),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$count de 3 productos seleccionados',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
+              ),
+              _CountPill(label: count == 3 ? 'Listo' : 'Falta $remaining'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: count / CartProvider.selectionLimit,
+              minHeight: 4,
+              backgroundColor: const Color(0xFFE7EAF0),
+              color: kNavy,
             ),
           ),
-          const SizedBox(width: 16),
-          Icon(
-            count == CartProvider.selectionLimit
-                ? Icons.check_circle_rounded
-                : Icons.touch_app_rounded,
-            color: count == CartProvider.selectionLimit
-                ? const Color(0xFF18845A)
-                : kMuted,
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded, size: 13, color: kMuted),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  count == 3
+                      ? 'Tu selección ya está lista para revisar.'
+                      : 'Selecciona ${remaining == 1 ? 'un artículo más' : '$remaining artículos más'} para desbloquear la orden combinada.',
+                  style: const TextStyle(
+                      fontSize: 10, color: kMuted, height: 1.25),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -251,12 +149,37 @@ class _SelectionProgress extends StatelessWidget {
   }
 }
 
-class _ProductCard extends StatelessWidget {
+class _CountPill extends StatelessWidget {
+  final String label;
+
+  const _CountPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5E9E7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: kAccent,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductTile extends StatelessWidget {
   final Product product;
   final bool selected;
   final VoidCallback onTap;
 
-  const _ProductCard({
+  const _ProductTile({
     required this.product,
     required this.selected,
     required this.onTap,
@@ -264,84 +187,74 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? kNavy : const Color(0xFFE7EAF0);
-
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.all(17),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 72,
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFF1F4FA) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? const Color(0xFFB8C7E4) : kLine,
+              width: selected ? 1.3 : 1,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: product.color,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(product.icon, color: kNavy, size: 28),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    selected
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    color: selected ? kNavy : const Color(0xFF9AA3B0),
-                    size: 24,
-                  ),
-                ],
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: product.color,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(product.icon, color: kNavy, size: 27),
               ),
-              const SizedBox(height: 15),
-              Text(
-                product.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 9, color: kMuted),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      formatMoney(product.price),
+                      style: const TextStyle(
+                        color: kAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                product.description,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: kMuted, fontSize: 13),
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Text(
-                    formatUsd(product.price),
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: kNavy,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    selected ? 'Seleccionado' : 'Agregar',
-                    style: TextStyle(
-                      color: selected ? kNavy : kMuted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 7),
+              Icon(
+                selected
+                    ? Icons.check_box_rounded
+                    : Icons.check_box_outline_blank_rounded,
+                color: selected ? kNavy : const Color(0xFF9DA5B1),
+                size: 20,
               ),
             ],
           ),
@@ -351,72 +264,86 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-class _CatalogBottomBar extends StatelessWidget {
-  final int count;
-  final bool canContinue;
-
-  const _CatalogBottomBar({required this.count, required this.canContinue});
+class _BundleNote extends StatelessWidget {
+  const _BundleNote();
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 600;
-
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE7EAF0))),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F6FA),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: kLine),
       ),
-      child: SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$count de 3 productos',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          canContinue
-                              ? 'Tu selección está lista'
-                              : 'Elige ${3 - count} más para continuar',
-                          style: const TextStyle(color: kMuted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: wide ? 230 : 154,
-                    child: ElevatedButton.icon(
-                      onPressed: canContinue
-                          ? () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const SummaryScreen(),
-                                ),
-                              )
-                          : null,
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 19),
-                      label: Text(wide ? 'Ver resumen' : 'Continuar'),
-                    ),
-                  ),
-                ],
-              ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.verified_user_outlined, color: kNavy, size: 16),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Al elegir 3 artículos se activa el envío sin costo y la garantía directa de fábrica.',
+              style: TextStyle(fontSize: 9, color: kMuted, height: 1.35),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CatalogFooter extends StatelessWidget {
+  final int count;
+  final bool canContinue;
+
+  const _CatalogFooter({required this.count, required this.canContinue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 9, 14, 7),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: kLine)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: ElevatedButton.icon(
+              onPressed: canContinue
+                  ? () => Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SummaryScreen(),
+                        ),
+                      )
+                  : null,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+              label: const Text('Continuar'),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                canContinue ? Icons.check_circle_outline : Icons.lock_outline,
+                size: 11,
+                color: canContinue ? kGreen : kMuted,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                canContinue
+                    ? '$count productos listos para continuar'
+                    : 'Selecciona 3 productos para continuar',
+                style: const TextStyle(fontSize: 9, color: kMuted),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

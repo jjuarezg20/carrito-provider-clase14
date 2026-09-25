@@ -5,7 +5,7 @@ class Product {
   final String id;
   final String name;
   final String description;
-  final double price;
+  final int price;
   final IconData icon;
   final Color color;
 
@@ -20,54 +20,56 @@ class Product {
 
   static const catalog = <Product>[
     Product(
-      id: 'headphones',
-      name: 'Audífonos Nova',
-      description: 'Sonido nítido para cada momento.',
-      price: 29.99,
-      icon: Icons.headphones_rounded,
-      color: Color(0xFFE9EAFE),
-    ),
-    Product(
-      id: 'bottle',
-      name: 'Botella térmica',
-      description: 'Acero inoxidable · 600 ml.',
-      price: 18.50,
-      icon: Icons.water_drop_rounded,
-      color: Color(0xFFE3F4F1),
-    ),
-    Product(
-      id: 'notebook',
-      name: 'Libreta A5',
-      description: 'Tapa dura para tus ideas.',
-      price: 8.00,
-      icon: Icons.menu_book_rounded,
-      color: Color(0xFFFFF1DD),
-    ),
-    Product(
       id: 'backpack',
-      name: 'Mochila urbana',
-      description: 'Práctica, ligera y lista para salir.',
-      price: 42.00,
+      name: 'Mochila Urbana Oxford',
+      description: 'Resistente al agua, 20L',
+      price: 45000,
       icon: Icons.backpack_rounded,
-      color: Color(0xFFFCE8E5),
+      color: Color(0xFFE9EDF2),
     ),
     Product(
-      id: 'lamp',
-      name: 'Lámpara de mesa',
-      description: 'Luz cálida con diseño compacto.',
-      price: 23.75,
-      icon: Icons.light_rounded,
-      color: Color(0xFFFFF4D6),
+      id: 'headphones',
+      name: 'Audífonos Inalámbricos Pro',
+      description: 'Cancelación activa de ruido',
+      price: 65000,
+      icon: Icons.headphones_rounded,
+      color: Color(0xFFE6EAF0),
     ),
     Product(
-      id: 'charger',
-      name: 'Cargador rápido',
-      description: 'Carga USB-C de 30 W.',
-      price: 16.90,
-      icon: Icons.bolt_rounded,
-      color: Color(0xFFE7F0FF),
+      id: 'watch',
+      name: 'Reloj Inteligente Fit Track',
+      description: 'Pulso y GPS dual',
+      price: 89000,
+      icon: Icons.watch_rounded,
+      color: Color(0xFFE9EDF2),
+    ),
+    Product(
+      id: 'thermos',
+      name: 'Termo de Acero Inoxidable',
+      description: 'Aislamiento térmico 24h',
+      price: 22500,
+      icon: Icons.thermostat_rounded,
+      color: Color(0xFFE9EDF2),
+    ),
+    Product(
+      id: 'sunglasses',
+      name: 'Lentes de Sol Polarizados',
+      description: 'Protección UV400 completa',
+      price: 34000,
+      icon: Icons.remove_red_eye_rounded,
+      color: Color(0xFFE9EDF2),
     ),
   ];
 }
 
-String formatUsd(double value) => '\$${value.toStringAsFixed(2)}';
+String formatMoney(int value) {
+  final digits = value.toString();
+  final grouped = StringBuffer();
+  for (var index = 0; index < digits.length; index++) {
+    if (index > 0 && (digits.length - index) % 3 == 0) {
+      grouped.write('.');
+    }
+    grouped.write(digits[index]);
+  }
+  return '\$${grouped.toString()}';
+}
